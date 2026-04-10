@@ -100,6 +100,28 @@ Common decisions to address:
 - **Background work** — queue (BullMQ) / cron / worker process
 - **Caching** — Redis with TTL contract / in-memory with invalidation
 - **Validation** — Zod (TS) / Pydantic (Python) at boundaries
+- **Logging** — structured logger with levels, format, and lifecycle coverage (see below)
+
+### 3b. Define the logging strategy
+
+Every architecture must include a logging decision. Choose a structured logger and define how it will be used across the project.
+
+**Default logger per stack:**
+
+| Stack | Logger | Why |
+|-------|--------|-----|
+| TypeScript | **pino** | Fast structured JSON, low overhead, works with Next.js and Express |
+| Python | **loguru** | Zero-config structured logging, human-readable dev output, easy rotation |
+
+**What to define:**
+
+- **Log levels** — which level for what: `debug` for internals, `info` for lifecycle events, `warning` for recoverable issues, `error` for failures
+- **Format** — JSON in production, human-readable in development
+- **Lifecycle events** — every service and worker must log `init`, `action`, and `exit` (or `shutdown`). This is non-negotiable.
+- **Where to create the logger** — one shared logger instance in `config/` or `utils/logger`, imported everywhere. No scattered `console.log` or `print` calls.
+- **What NOT to log** — secrets, tokens, passwords, PII. Redact at the logger config level.
+
+Include the logging decision in the architecture handoff table. If the project already has a logger, document it; do not introduce a second one.
 
 ### 4. Define the folder structure
 
@@ -153,6 +175,7 @@ Produce the architecture handoff in this shape:
 ## Data model
 ## Key patterns (named: Facade, Repository, Command, Worker)
 ## Technical decisions (table format)
+## Logging strategy (logger, levels, lifecycle events)
 ## Folder structure
 ## Boundaries and interfaces
 ## API / service contracts
@@ -168,6 +191,7 @@ Produce the architecture handoff in this shape:
 - [ ] Async boundaries are consistent within each flow
 - [ ] Cache has TTL or invalidation contract
 - [ ] Contracts use executable validation (Zod/Pydantic), not prose
+- [ ] Logging strategy is defined: logger choice, levels, lifecycle events (init/action/exit)
 - [ ] The first implementation slice is obvious and small
 - [ ] Framework choices are justified with trade-offs
 - [ ] Relevant architecture questions were asked before the plan was written

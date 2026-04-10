@@ -56,6 +56,7 @@ After each round, briefly reflect back what you learned before asking the next q
 - Stay within one abstraction level at a time
 - Never mix sync and async in one logical path
 - Validate at boundaries with executable schemas
+- Add lifecycle logging to every service and worker (see Logging rules below)
 
 ## Default stack choices
 
@@ -71,6 +72,7 @@ When the project hasn't chosen yet, default to:
 | State | **Zustand** (client), **React Query** (server) | Minimal boilerplate, cache-aware |
 | Forms | **react-hook-form + Zod resolver** | Validation at boundary |
 | Styling | **Tailwind CSS + shadcn/ui** | Token-driven, copy-in components |
+| Logging | **pino** | Fast structured JSON, low overhead, works with Next.js and Express |
 
 **Python / Backend:**
 
@@ -80,7 +82,59 @@ When the project hasn't chosen yet, default to:
 | Data layer | **SQLModel** | SQLAlchemy + Pydantic in one model |
 | Validation | **Pydantic** | Built into FastAPI, schema-first |
 | Background | **asyncio.gather** for parallel, **BullMQ** (via worker) for queued | Clear async boundaries |
+| Logging | **loguru** | Zero-config structured logging, human-readable dev output |
 | Testing | **pytest + pytest-asyncio** | Async-aware, fixture-driven |
+
+## Logging rules
+
+Every generated codebase must include a logger. Do not use bare `console.log` (TypeScript) or `print` (Python) for application logging.
+
+**Setup — do once per project:**
+
+- Create a shared logger instance in `utils/logger` or `config/logger`
+- TypeScript: use **pino** (`import pino from "pino"`)
+- Python: use **loguru** (`from loguru import logger`)
+- JSON format in production, human-readable in development
+
+**Lifecycle events — always add these:**
+
+Every service, worker, and long-running process must log three lifecycle events:
+
+1. **init** — when the module/service starts or is instantiated (log config, connected resources)
+2. **action** — when a significant operation executes (log what happened, key IDs, duration)
+3. **exit / shutdown** — when the process or service stops (log reason, cleanup status)
+
+**TypeScript example (pino):**
+
+```typescript
+const log = logger.child({ service: "OrderService" });
+
+log.info({ orderId }, "order.created");
+log.warn({ orderId, reason }, "order.payment_retry");
+log.error({ orderId, err }, "order.failed");
+```
+
+**Python example (loguru):**
+
+```python
+from loguru import logger
+
+logger.info("service.init", config=config.dict())
+logger.info("order.created", order_id=order.id)
+logger.warning("order.payment_retry", order_id=order.id, reason=reason)
+logger.error("order.failed", order_id=order.id, error=str(err))
+```
+
+**What NOT to log:** secrets, tokens, passwords, full request bodies with PII. Redact sensitive fields.
+
+**Log level guide:**
+
+| Level | Use for |
+|-------|---------|
+| `debug` | Internal state, loop iterations, cache hits/misses — off in production |
+| `info` | Lifecycle events (init, action, exit), successful operations |
+| `warning` | Recoverable issues, retries, deprecated usage |
+| `error` | Failures that need attention, unhandled exceptions |
 
 ## Workflow
 
@@ -158,6 +212,8 @@ When asked to implement, produce:
 - [ ] Data shape is explicit with executable schemas (Zod / Pydantic / SQLModel)
 - [ ] Each layer does exactly one job
 - [ ] Patterns are named (Repository, Service, Command)
+- [ ] Logger is set up (pino / loguru) — no bare console.log or print
+- [ ] Services and workers log lifecycle events (init, action, exit)
 - [ ] Errors are handled intentionally at boundaries
 - [ ] Async usage is consistent within each flow
 - [ ] Verification happened after the change (not "trust me")
@@ -184,3 +240,5 @@ I'll lead this as a short implementation interview instead of jumping straight t
 - Mixing sync and async in the same service method
 - Writing code without knowing which pattern it follows
 - Skipping the interview step and coding from a vague one-liner without clarifying the slice
+- Using scattered console.log / print instead of a structured logger
+- Forgetting lifecycle logs (init, action, exit) in services and workers
