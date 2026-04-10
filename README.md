@@ -20,11 +20,11 @@ module-02-skills-and-agents/
     ui-design-systems-agent/        # UI design systems agent
   lesson-2.6-security-agent/
     security-review-agent/          # Security review agent
-  lesson-2.7-dev-agent-composer/
+  lesson-2.9-dev-agent-composer/
     dev-composer-agent/             # Dev composer agent
-  lesson-2.8-quality-gate-agent/
+  lesson-2.10-quality-gate-agent/
     quality-gate-agent/             # Quality gate agent
-  lesson-2.9-debug-agent/
+  lesson-2.11-debug-agent/
     debug-fix-agent/                # Debug & fix agent
 ```
 
@@ -35,6 +35,8 @@ asm add skill github:gil-kapel/cursor-course-skills/module-02-skills-and-agents/
 ```
 
 Or install all skills for a lesson using sparse checkout (see `bundle_module02_skills.py` in the main course repo).
+
+The canonical public paths now match the course repo lesson numbering (`2.9`, `2.10`, `2.11`). Older `2.7`, `2.8`, and `2.9` folders are kept only as legacy copies where still present.
 
 ## Course repo
 
